@@ -39,7 +39,7 @@ public class Main{
     }
 
     private static String formQuery(boolean overrideSymlinks){
-        StringBuilder query = new StringBuilder("Make .minecraft soft links(symlinks) to all instances ");
+        StringBuilder query = new StringBuilder("Make .minecraft soft links(symlinks) to all instances\n");
         query.append("[it will delete .minecraft inside all instances ");
         if(overrideSymlinks){
             query.append("including ");

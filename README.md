@@ -8,9 +8,11 @@
 
 ### For now this implementation allows you to link the original .minecraft directory to all instances
 <br>**To run the program**
+- download config and jar files
 - modify the `config.json` file by specifying the path to MultiMC/UltimMC root directory
 - put the config file on the same level as the .jar file
 - execute `java -jar instanceLinker.jar`
+- confirm prompt by typing `y` and pressing enter or typing anything else to abort
 
 ### Libraries used:
     json-simple
