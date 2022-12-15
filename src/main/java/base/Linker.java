@@ -9,13 +9,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 class Linker{
     public static final String LAUNCHER_TEMP = "_LAUNCHER_TEMP";
 
-    public static void symlinkDotMinecraftToAllInstances(Path dotMcPath, Path launcherPath, boolean overrideSymlinks) {
-        Path instances = launcherPath.resolve("instances");
-        boolean instancesExist = Files.isDirectory(instances);
-        if(!instancesExist){
-            throw new IllegalStateException("No instances directory found");
-        }
-        File[] instanceFiles = instances.toFile().listFiles();
+    private static void symlinkAllImplementation(Path dotMcPath, File[] instanceFiles, boolean overrideSymlinks) {
         for (File instance : instanceFiles){
             if(instance.isDirectory() && !instance.getName().equals(LAUNCHER_TEMP)){
                 Path instanceDotMc = instance.toPath().resolve(".minecraft");
@@ -35,25 +29,7 @@ class Linker{
                     }
                 }
                 if(exists && !isSymlink){
-                    Thread deletionThread = new Thread(new Runnable(){
-                        @Override
-                        public void run(){
-                            long st = System.currentTimeMillis();
-                            DeletionResult result = deleteDirectoryRecursively(instanceDotMc.toFile());
-                            long en = System.currentTimeMillis();
-                            System.out.println("Deleted "
-                                    + result.deletedFiles + " files, "
-                                    + result.deletedDirectories + " directories, "
-                                    + "in " + (en - st) / 1000D + " seconds, "
-                                    + "had " + result.failures + " failures ");
-                        }
-                    });
-                    deletionThread.start();
-                    try{
-                        deletionThread.join();
-                    }catch (InterruptedException e){
-                        throw new RuntimeException(e);
-                    }
+                    startDeletionThreadAndAwaitFinish(instanceDotMc.toFile());
                 }
 
                 if(!createSymlink(instanceDotMc, dotMcPath)){
@@ -61,6 +37,39 @@ class Linker{
                 }
             }
         }
+    }
+
+    private static void startDeletionThreadAndAwaitFinish(File instanceDotMc){
+        Thread deletionThread = new Thread(new Runnable(){
+            @Override
+            public void run(){
+                long st = System.currentTimeMillis();
+                DeletionResult result = deleteDirectoryRecursively(instanceDotMc);
+                long en = System.currentTimeMillis();
+                System.out.println("Deleted "
+                        + result.deletedFiles + " files, "
+                        + result.deletedDirectories + " directories, "
+                        + "in " + (en - st) / 1000D + " seconds, "
+                        + "had " + result.failures + " failures ");
+            }
+        });
+        deletionThread.start();
+        try{
+            deletionThread.join();
+        }catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void symlinkDotMinecraftToAllInstances(Path dotMcPath, Path launcherPath, boolean overrideSymlinks) {
+        Path instances = launcherPath.resolve("instances");
+        boolean instancesExist = Files.isDirectory(instances);
+        if(!instancesExist){
+            throw new IllegalStateException("No instances directory found");
+        }
+        File[] instanceDirs = instances.toFile().listFiles();
+        assert instanceDirs != null;
+        symlinkAllImplementation(dotMcPath, instanceDirs, overrideSymlinks);
     }
     private static void deleteDirectory(File dir, DeletionResult result) throws IOException{
         File[] files = dir.listFiles();
