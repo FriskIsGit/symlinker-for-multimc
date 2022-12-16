@@ -1,4 +1,4 @@
-package base;
+package base.struct;
 
 public class DeletionResult{
     public int deletedFiles, deletedDirectories, failures;
